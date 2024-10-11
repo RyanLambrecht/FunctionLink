@@ -14,6 +14,11 @@ from collections import Counter
 
 import nltk
 from nltk.corpus import wordnet as wn
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize as tokenize
+
+nltk.data.path.append('/Users/garrettgilbert/nltk_data')
+
 
 def get_synset(word):
     synsets = wn.synsets(word)
@@ -52,17 +57,32 @@ def group_words_by_similarity(words, threshold=0.5):
     return word_dict
 
 
-FILEPATH = r'FunctionLink\textFiles\requirements-3nfr-80fr.txt'
+FILEPATH = r'textFiles/requirements-3nfr-80fr.txt'
 requirements = open(FILEPATH, 'r')
 
+STOP_WORDS = set(stopwords.words('english'))
+
+
+
+func_req = []
+non_func_req = []
 content = []
 for line in requirements:  # Corrected the variable name
     # Strip whitespace and check if the line contains a colon
     if ':' in line:
        
         line = line.lower()
+        req = line.split(':', 1)[1].strip().replace('.', '')
+        
          # Split the line at the first colon and take the part after it, then removes the '.'s
-        content.append(line.split(':', 1)[1].strip().replace('.', ''))
+        content.append(req)
+        words = tokenize(req)
+        filtered_words = [word for word in words if word.lower() not in STOP_WORDS]
+        if line[:3] == 'nfr':
+            non_func_req.append(filtered_words)
+        elif line[:2] == 'fr':
+            func_req.append(filtered_words)
+        
 
 #creating a vocabulary with only words we deem significant by if they appear in <90% of the requirements
 vocab = set()
@@ -78,6 +98,8 @@ for x in req_slim:
     redundancy_counter.update(y)
 
 redundant_words = []
+
+#print(redundancy_counter)
     
 for x in redundancy_counter:
     if redundancy_counter.get(x) / len(req_slim) > .9:
@@ -91,23 +113,20 @@ for redundant in redundant_words:
 # End of redundant
 #start of grouping
 
-temp = group_words_by_similarity(vocab, .76)
+groups = group_words_by_similarity(vocab, .76)
 
-for word, common_word in temp.items():
-    print(f"'{word}' is grouped with '{common_word}'")
+# for word, common_word in temp.items():
+#     print(f"'{word}' is grouped with '{common_word}'")
+
+output = [len(func_req)]
+
+for x in range(len(output)):
+    output[x] += "FR"+str(x)
+    
+for x in output:
+    print(output)
     
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+# for x in non_func_req:
+#     for y in func_req:
